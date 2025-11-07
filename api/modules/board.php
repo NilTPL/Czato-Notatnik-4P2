@@ -14,7 +14,7 @@ function handleboard($pdo, $method, $id = null) {
                 echo json_encode(['error' => 'Missing content']);
                 return;
             }
-            $stmt = $pdo->prepare("INSERT INTO `board` (`content`, `timestamp`) values (?, LOCALTIMESTAMP())" );
+            $stmt = $pdo->prepare("INSERT INTO `board` (`content`) values (?)" );
             $stmt->execute([$data['content']]);
             echo json_encode(['success' => true]);
             break;
@@ -26,8 +26,19 @@ function handleboard($pdo, $method, $id = null) {
                 echo json_encode(['error' => 'missing content or id']);
                 return;
             }
-            $stmt = $pdo->prepare("UPDATE `board` SET `content` = ?, `timestamp` = LOCALTIMESTAMP() WHERE `id` = ?");
+            $stmt = $pdo->prepare("UPDATE `board` SET `content` = ? WHERE `id` = ?");
             $stmt->execute([$data['content'], $data['id']]);
+            echo json_encode(['success' => true]);
+            break;
+        case 'DELETE':
+            $data = json_decode(file_get_contents("php://input"), true);
+            if (empty($data['id'])) {
+                http_response_code(400);
+                echo json_encode(['error' => 'missing id']);
+                return;
+            }
+            $stmt = $pdo->prepare("DELETE FROM `board` WHERE `id` = ?");
+            $stmt -> execute([$data['id']]);
             echo json_encode(['success' => true]);
             break;
         default:
