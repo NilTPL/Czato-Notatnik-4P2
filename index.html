@@ -1,1 +1,97 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablica nauczyciela</title>
+    <link rel="stylesheet" href="css.css">
+    <script src="js.js"></script>
+</head>
+<body>
+    <div class="container">
+        <!-- Panel boczny z nawigacją -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Mega Chat Notatnik</h1>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" data-tab="tab1">Logowanie</a></li>
+                <li><a href="#" class="nav-link" data-tab="tab2">Tablica nauczyciela</a></li>
+                <li><a href="#" class="nav-link" data-tab="tab3">Czat grupowy</a></li>
+                <li><a href="#" class="nav-link" data-tab="tab4">Notatki</a></li>
+            </ul>
+        </div>
 
+        <!-- Główna zawartość -->
+        <div class="main-content">
+            <!-- Zakładka 1: Logowanie -->
+            <div id="tab1" class="tab-content active">
+                <div class="tab-header">
+                    <h2>Zaloguj się</h2>
+                    <p>Wprowadź swoje dane logowania</p>
+                </div>
+                <form class="login-form">
+                    <div class="form-group">
+                        <label for="login">Login</label>
+                        <input type="text" id="login" placeholder="Wprowadź login">
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Hasło</label>
+                        <input type="password" id="password" placeholder="Wprowadź hasło">
+                    </div>
+                    <button type="submit" class="login-btn">Zaloguj się</button>
+                </form>
+            </div>
+
+            <!-- Zakładka 2: Tablica nauczyciela -->
+            <div id="tab2" class="tab-content">
+                <div class="tab-header">
+                    <h2>Tablica nauczyciela</h2>
+                    <p>Mega • ważne</p>
+                </div>
+                <p>Oto tablica nauczyciela:</p>
+                <ul class="task-list">
+                    <li><input type="checkbox"> jakas notatka</li>
+                    <li><input type="checkbox"> jakas notatka 2</li>
+                </ul>
+            </div>
+
+            <!-- Zakładka 3: Czat grupowy -->
+            <div id="tab3" class="tab-content">
+                <div class="tab-header">
+                    <h2>Czat grupowy</h2>
+                </div>
+                <div class="chat-messages">
+                    <ul class="task-list">
+                        <li><input type="checkbox"> jakas wiadomość</li>
+                        <li><input type="checkbox"> jakas wiadomość</li>
+                    </ul>
+                </div>
+                <div class="message-input">
+                    <input type="text" placeholder="Wpisz wiadomość...">
+                    <button>Wyślij</button>
+                </div>
+                <div class="users-section">
+                    <h3>Użytkownicy:</h3>
+                    <ul class="users-list">
+                        <li><span class="status-indicator online"></span> osoba1</li>
+                        <li><span class="status-indicator offline"></span> osoba2</li>
+                        <li><span class="status-indicator online"></span> osoba3</li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Zakładka 4: Notatki -->
+            <div id="tab4" class="tab-content">
+                <div class="tab-header">
+                    <h2>Notatki</h2>
+                </div>
+                <ul class="notes-list">
+                    <li>jakas notatka</li>
+                    <li>jakas notatka</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
