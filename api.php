@@ -2,7 +2,7 @@
 header("Content-Type: application/json");
 require_once 'db.php';
 //require_once 'jwt.php';
-
+ 
 /*
 |--------------------------------------------------------------------------
 | ROUTING — bez .htaccess, bez rewrite

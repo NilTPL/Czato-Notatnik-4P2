@@ -448,7 +448,7 @@ body {
     }
     
     .nav-links {
-        display: flex;
+        display: flex; 
         overflow-x: auto;
     }
     

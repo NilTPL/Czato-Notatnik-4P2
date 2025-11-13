@@ -11,7 +11,7 @@ let pollingInterval = null;
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
-
+ 
 function initializeApp() {
     const navLinks = document.querySelectorAll('.nav-link');
     const tabContents = document.querySelectorAll('.tab-content');
