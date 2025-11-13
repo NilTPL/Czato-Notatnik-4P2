@@ -45,3 +45,4 @@
                 document.querySelector('.nav-link[data-tab="tab2"]').click();
             });
         });
+
