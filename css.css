@@ -148,7 +148,21 @@
         .login-btn:hover {
             background-color: #2980b9;
         }
-
+        .form-group select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+            background-color: #fff;
+            color: #2c3e50;
+        }
+        
+        .form-group select:focus {
+            border-color: #3498db;
+            outline: none;
+        }
         /* Listy zadań */
         .task-list {
             list-style: none;
