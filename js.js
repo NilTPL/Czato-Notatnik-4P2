@@ -1,4 +1,4 @@
-// Konfiguracja API - POPRAWIONE
+// Konfiguracja API
 const API_BASE_URL = 'http://localhost/GW4p/Czato-Notatnik-4P2/api.php';
 
 // Globalne zmienne
@@ -11,34 +11,34 @@ let pollingInterval = null;
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
- 
+
 function initializeApp() {
     const navLinks = document.querySelectorAll('.nav-link');
     const tabContents = document.querySelectorAll('.tab-content');
-    
+
     // Sprawdź czy przycisk logout istnieje przed dodaniem event listenera
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', logout);
     }
-    
+
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            
+
             // Usuń klasę active ze wszystkich linków
             navLinks.forEach(item => item.classList.remove('active'));
-            
+
             // Dodaj klasę active do klikniętego linku
             this.classList.add('active');
-            
+
             // Ukryj wszystkie zakładki
             tabContents.forEach(tab => tab.classList.remove('active'));
-            
+
             // Pokaż odpowiednią zakładkę
             const tabId = this.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
-            
+
             // Załaduj dane dla aktywnej zakładki
             if (tabId === 'tab2') {
                 loadTeacherBoard();
@@ -55,22 +55,22 @@ function initializeApp() {
     // Obsługa formularza logowania
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
-    
+
     loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const login = document.getElementById('login').value;
         const password = document.getElementById('password').value;
         const role = document.getElementById('role').value;
-        
+
         try {
             // PRAWDZIWE logowanie z API
             await realLogin(login, password, role);
-            
+
             loginError.style.display = 'none';
-            
+
             // Przejdź do zakładki Tablica nauczyciela po zalogowaniu
             document.querySelector('.nav-link[data-tab="tab2"]').click();
-            
+
         } catch (error) {
             loginError.textContent = error.message || 'Błąd logowania';
             loginError.style.display = 'block';
@@ -80,12 +80,12 @@ function initializeApp() {
     // Obsługa czatu
     const messageInput = document.getElementById('messageInput');
     const sendMessageBtn = document.getElementById('sendMessage');
-    
+
     // Obsługa wysyłania nowej wiadomości
     sendMessageBtn.addEventListener('click', async function() {
         await sendMessage();
     });
-    
+
     // Wysyłanie wiadomości po naciśnięciu Enter
     messageInput.addEventListener('keypress', function(e) {
         if (e.key === 'Enter') {
@@ -110,13 +110,13 @@ async function realLogin(login, password, role) {
             username: login,
             password: password
         });
-        
+
         if (response.success && response.user) {
             // Sprawdź czy wybrana rola zgadza się z rolą w bazie
             if (response.user.role !== role) {
                 throw new Error('Wybrana rola nie zgadza się z kontem');
             }
-            
+
             currentUser = {
                 id: response.user.ID,
                 name: response.user.username,
@@ -124,7 +124,7 @@ async function realLogin(login, password, role) {
             };
             currentRole = response.user.role;
             authToken = 'token_' + Date.now();
-            
+
             // Aktualizacja interfejsu użytkownika
             updateUserInterface();
             return response;
@@ -142,16 +142,16 @@ function updateUserInterface() {
     if (logoutBtn) {
         logoutBtn.style.display = 'block';
     }
-    
+
     const userInfo = document.getElementById('userInfo');
     const userName = document.getElementById('userName');
     const userRole = document.getElementById('userRole');
-    
+
     userInfo.style.display = 'block';
     userName.textContent = currentUser.name;
     userRole.textContent = currentRole === 'teacher' ? 'Nauczyciel' : 'Uczeń';
     userRole.className = `role-badge ${currentRole}`;
-    
+
     // Ukryj zakładkę logowania
     document.querySelector('.nav-link[data-tab="tab1"]').parentElement.style.display = 'none';
 }
@@ -160,7 +160,7 @@ function updateUserInterface() {
 function setupBoardPermissions() {
     const editBtn = document.getElementById('editBoardBtn');
     const permissionInfo = document.getElementById('permissionInfo');
-    
+
     if (currentRole === 'teacher') {
         editBtn.style.display = 'inline-block';
         permissionInfo.style.display = 'none';
@@ -179,24 +179,24 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
             'Content-Type': 'application/json',
         }
     };
-    
+
     // Dodaj token autoryzacyjny jeśli dostępny
     if (authToken) {
         options.headers['Authorization'] = `Bearer ${authToken}`;
     }
-    
+
     // Dodaj dane dla metod POST, PUT
     if (data && (method === 'POST' || method === 'PUT')) {
         options.body = JSON.stringify(data);
     }
-    
+
     try {
         const response = await fetch(url, options);
-        
+
         if (!response.ok) {
             throw new Error(`Błąd HTTP: ${response.status}`);
         }
-        
+
         const result = await response.json();
         return result;
     } catch (error) {
@@ -209,15 +209,15 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
 async function loadTeacherBoard() {
     const boardContent = document.getElementById('boardContent');
     const boardLoading = document.getElementById('boardLoading');
-    
+
     try {
         boardLoading.style.display = 'block';
-        
+
         // Pobierz dane z API - prawdziwe dane z bazy
         const boardData = await apiRequest('board');
-        
+
         boardLoading.style.display = 'none';
-        
+
         if (boardData && boardData.length > 0) {
             // Weź pierwszą (lub najnowszą) tablicę
             const latestBoard = boardData[0];
@@ -225,7 +225,7 @@ async function loadTeacherBoard() {
         } else {
             boardContent.textContent = 'Tablica jest pusta. Kliknij "Edytuj tablicę" aby dodać treść.';
         }
-        
+
     } catch (error) {
         boardLoading.innerHTML = `<div class="error">Błąd ładowania tablicy: ${error.message}</div>`;
     }
@@ -238,11 +238,11 @@ function enableBoardEditing() {
     const editBtn = document.getElementById('editBoardBtn');
     const saveBtn = document.getElementById('saveBoardBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
-    
+
     boardContent.style.display = 'none';
     boardEditor.style.display = 'block';
     boardEditor.value = boardContent.textContent;
-    
+
     editBtn.style.display = 'none';
     saveBtn.style.display = 'inline-block';
     cancelBtn.style.display = 'inline-block';
@@ -255,10 +255,10 @@ function cancelBoardEditing() {
     const editBtn = document.getElementById('editBoardBtn');
     const saveBtn = document.getElementById('saveBoardBtn');
     const cancelBtn = document.getElementById('cancelEditBtn');
-    
+
     boardContent.style.display = 'block';
     boardEditor.style.display = 'none';
-    
+
     editBtn.style.display = 'inline-block';
     saveBtn.style.display = 'none';
     cancelBtn.style.display = 'none';
@@ -268,25 +268,25 @@ function cancelBoardEditing() {
 async function saveBoardContent() {
     const boardEditor = document.getElementById('boardEditor');
     const boardContent = document.getElementById('boardContent');
-    
+
     try {
         // Pobierz aktualną tablicę żeby poznać ID
         const currentBoard = await apiRequest('board');
         let boardId = 1; // Domyślne ID
-        
+
         if (currentBoard && currentBoard.length > 0) {
             boardId = currentBoard[0].ID;
         }
-        
+
         // Zaktualizuj tablicę w bazie
         await apiRequest('board', 'PUT', { 
             id: boardId,
             content: boardEditor.value 
         });
-        
+
         boardContent.textContent = boardEditor.value;
         cancelBoardEditing();
-        
+
     } catch (error) {
         alert('Błąd zapisywania tablicy: ' + error.message);
     }
@@ -298,10 +298,10 @@ function startChatPolling() {
     if (pollingInterval) {
         clearInterval(pollingInterval);
     }
-    
+
     // Załaduj wiadomości natychmiast
     loadMessages();
-    
+
     // Ustaw odpytywanie co 2 sekundy
     pollingInterval = setInterval(loadMessages, 2000);
 }
@@ -309,18 +309,18 @@ function startChatPolling() {
 // Ładowanie wiadomości czatu Z BAZY DANYCH
 async function loadMessages() {
     const chatMessages = document.getElementById('chatMessages');
-    
+
     try {
         // Pobierz wiadomości z bazy
         const messages = await apiRequest('messages');
-        
+
         chatMessages.innerHTML = '';
-        
+
         if (messages.length === 0) {
             chatMessages.innerHTML = '<div class="loading">Brak wiadomości</div>';
             return;
         }
-        
+
         messages.forEach(msg => {
             const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const username = msg.username || `Użytkownik ${msg.user_ID}`;
@@ -336,7 +336,7 @@ function displayMessage(user, message, time) {
     const chatMessages = document.getElementById('chatMessages');
     const messageElement = document.createElement('div');
     messageElement.className = 'message';
-    
+
     messageElement.innerHTML = `
         <div class="message-header">
             <span class="message-user">${user}</span>
@@ -344,7 +344,7 @@ function displayMessage(user, message, time) {
         </div>
         <div class="message-content">${message}</div>
     `;
-    
+
     chatMessages.appendChild(messageElement);
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
@@ -353,7 +353,7 @@ function displayMessage(user, message, time) {
 async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     const message = messageInput.value.trim();
-    
+
     if (message && currentUser) {
         try {
             // Wyślij wiadomość do bazy
@@ -362,11 +362,11 @@ async function sendMessage() {
                 user_ID: currentUser.id,
                 username: currentUser.name
             });
-            
+
             const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             displayMessage(currentUser.name, message, currentTime);
             messageInput.value = '';
-            
+
         } catch (error) {
             console.error('Błąd wysyłania wiadomości:', error);
             alert('Błąd wysyłania wiadomości: ' + error.message);
@@ -378,16 +378,16 @@ async function sendMessage() {
 async function loadUsers() {
     const usersList = document.getElementById('usersList');
     const usersLoading = document.getElementById('usersLoading');
-    
+
     try {
         usersLoading.style.display = 'block';
-        
+
         // Pobierz użytkowników z bazy
         const users = await apiRequest('users');
-        
+
         usersLoading.style.display = 'none';
         usersList.innerHTML = '';
-        
+
         users.forEach(user => {
             const userItem = document.createElement('li');
             userItem.innerHTML = `
@@ -405,21 +405,21 @@ async function loadUsers() {
 async function loadNotes() {
     const notesContainer = document.getElementById('notesContainer');
     const notesLoading = document.getElementById('notesLoading');
-    
+
     try {
         notesLoading.style.display = 'block';
-        
+
         // Pobierz notatki z bazy dla zalogowanego użytkownika
         const notes = await apiRequest(`notes?user_id=${currentUser.id}`);
-        
+
         notesLoading.style.display = 'none';
         notesContainer.innerHTML = '';
-        
+
         if (notes.length === 0) {
             notesContainer.innerHTML = '<div class="loading">Brak notatek. Kliknij "Dodaj notatkę" aby utworzyć pierwszą.</div>';
             return;
         }
-        
+
         notes.forEach((note, index) => {
             const noteElement = createNoteElement(note, index);
             notesContainer.appendChild(noteElement);
@@ -434,7 +434,7 @@ function createNoteElement(note, index) {
     const noteElement = document.createElement('div');
     noteElement.className = 'note-item';
     noteElement.dataset.noteId = note.ID;
-    
+
     noteElement.innerHTML = `
         <div class="note-header">
             <span class="note-date">${new Date(note.updated_at || note.created_at).toLocaleString()}</span>
@@ -444,20 +444,20 @@ function createNoteElement(note, index) {
         </div>
         <textarea class="note-content" data-note-id="${note.ID}">${note.content}</textarea>
     `;
-    
+
     // Dodaj obsługę usuwania notatki
     const deleteBtn = noteElement.querySelector('.delete-note');
     deleteBtn.addEventListener('click', function() {
         deleteNote(note.ID);
     });
-    
+
     return noteElement;
 }
 
 // Dodawanie nowej notatki DO BAZY DANYCH
 async function addNewNote() {
     const notesContainer = document.getElementById('notesContainer');
-    
+
     try {
         // Utwórz nową notatkę w bazie
         const response = await apiRequest('notes', 'POST', {
@@ -465,7 +465,7 @@ async function addNewNote() {
             title: 'Nowa notatka',
             content: ''
         });
-        
+
         if (response.success) {
             // Załaduj notatki ponownie
             loadNotes();
@@ -489,13 +489,13 @@ async function deleteNote(noteId) {
 // Zapis wszystkich notatek DO BAZY DANYCH
 async function saveAllNotes() {
     const noteElements = document.querySelectorAll('.note-item');
-    
+
     try {
         for (const element of noteElements) {
             const noteId = element.dataset.noteId;
             const textarea = element.querySelector('.note-content');
             const content = textarea.value.trim();
-            
+
             if (content) {
                 await apiRequest('notes', 'PUT', {
                     id: noteId,
@@ -504,9 +504,9 @@ async function saveAllNotes() {
                 });
             }
         }
-        
+
         alert('Notatki zostały zapisane!');
-        
+
     } catch (error) {
         alert('Błąd zapisywania notatek: ' + error.message);
     }
@@ -522,7 +522,7 @@ async function logout() {
     } catch (error) {
         console.error('Błąd podczas wylogowania:', error);
     }
-    
+
     // Czyścimy dane o użytkowniku
     currentUser = null;
     authToken = null;
@@ -547,7 +547,7 @@ async function logout() {
     if (logoutBtn) {
         logoutBtn.style.display = 'none';
     }
-    
+
     // Czyścimy formularz logowania
     document.getElementById('loginForm').reset();
 }
