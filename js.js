@@ -1,6 +1,5 @@
-
-// Konfiguracja API
-const API_BASE_URL = 'localhost\GW4p\Czato-Notatnik-4P2\api.php';
+// Konfiguracja API - POPRAWIONE
+const API_BASE_URL = 'http://localhost/GW4p/Czato-Notatnik-4P2/api.php';
 
 // Globalne zmienne
 let currentUser = null;
@@ -16,7 +15,12 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     const navLinks = document.querySelectorAll('.nav-link');
     const tabContents = document.querySelectorAll('.tab-content');
-    document.getElementById('logoutBtn').addEventListener('click', logout);
+    
+    // Sprawdź czy przycisk logout istnieje przed dodaniem event listenera
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
@@ -59,8 +63,8 @@ function initializeApp() {
         const role = document.getElementById('role').value;
         
         try {
-            // Symulacja logowania - w rzeczywistości połącz z API
-            await simulateLogin(login, password, role);
+            // PRAWDZIWE logowanie z API
+            await realLogin(login, password, role);
             
             loginError.style.display = 'none';
             
@@ -99,29 +103,46 @@ function initializeApp() {
     document.getElementById('saveNotesBtn').addEventListener('click', saveAllNotes);
 }
 
-// Symulacja logowania (do zastąpienia prawdziwym API)
-async function simulateLogin(login, password, role) {
-    // Tutaj w rzeczywistości będzie zapytanie do API
-    return new Promise((resolve, reject) => {
-        setTimeout(() => {
-            if (login && password && role) {
-                currentUser = { id: 1, name: login, role: role };
-                currentRole = role;
-                authToken = 'simulated_token_' + Date.now();
-                
-                // Aktualizacja interfejsu użytkownika
-                updateUserInterface();
-                resolve({ user: currentUser, token: authToken });
-            } else {
-                reject(new Error('Nieprawidłowe dane logowania'));
+// PRAWDZIWE logowanie z API
+async function realLogin(login, password, role) {
+    try {
+        const response = await apiRequest('users', 'POST', {
+            username: login,
+            password: password
+        });
+        
+        if (response.success && response.user) {
+            // Sprawdź czy wybrana rola zgadza się z rolą w bazie
+            if (response.user.role !== role) {
+                throw new Error('Wybrana rola nie zgadza się z kontem');
             }
-        }, 1000);
-    });
+            
+            currentUser = {
+                id: response.user.ID,
+                name: response.user.username,
+                role: response.user.role
+            };
+            currentRole = response.user.role;
+            authToken = 'token_' + Date.now();
+            
+            // Aktualizacja interfejsu użytkownika
+            updateUserInterface();
+            return response;
+        } else {
+            throw new Error('Nieprawidłowe dane logowania');
+        }
+    } catch (error) {
+        throw new Error(error.message || 'Błąd logowania');
+    }
 }
 
 // Aktualizacja interfejsu po zalogowaniu
 function updateUserInterface() {
-    document.getElementById('logoutBtn').style.display = 'block';
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'block';
+    }
+    
     const userInfo = document.getElementById('userInfo');
     const userName = document.getElementById('userName');
     const userRole = document.getElementById('userRole');
@@ -184,7 +205,7 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
     }
 }
 
-// Ładowanie tablicy nauczyciela
+// Ładowanie tablicy nauczyciela Z BAZY DANYCH
 async function loadTeacherBoard() {
     const boardContent = document.getElementById('boardContent');
     const boardLoading = document.getElementById('boardLoading');
@@ -192,12 +213,18 @@ async function loadTeacherBoard() {
     try {
         boardLoading.style.display = 'block';
         
-        // Symulacja pobierania danych z API
+        // Pobierz dane z API - prawdziwe dane z bazy
         const boardData = await apiRequest('board');
-        // W rzeczywistości: const boardData = await apiRequest('board');
         
         boardLoading.style.display = 'none';
-        boardContent.textContent = boardData.content || 'Tablica jest pusta. Kliknij "Edytuj tablicę" aby dodać treść.';
+        
+        if (boardData && boardData.length > 0) {
+            // Weź pierwszą (lub najnowszą) tablicę
+            const latestBoard = boardData[0];
+            boardContent.textContent = latestBoard.content || 'Tablica jest pusta.';
+        } else {
+            boardContent.textContent = 'Tablica jest pusta. Kliknij "Edytuj tablicę" aby dodać treść.';
+        }
         
     } catch (error) {
         boardLoading.innerHTML = `<div class="error">Błąd ładowania tablicy: ${error.message}</div>`;
@@ -237,15 +264,25 @@ function cancelBoardEditing() {
     cancelBtn.style.display = 'none';
 }
 
-// Zapis treści tablicy
+// Zapis treści tablicy DO BAZY DANYCH
 async function saveBoardContent() {
     const boardEditor = document.getElementById('boardEditor');
     const boardContent = document.getElementById('boardContent');
     
     try {
-        // Symulacja zapisu do API
-        await apiRequest('board', 'PUT', { content: boardEditor.value });
-        // W rzeczywistości: await apiRequest('board', 'PUT', { content: boardEditor.value });
+        // Pobierz aktualną tablicę żeby poznać ID
+        const currentBoard = await apiRequest('board');
+        let boardId = 1; // Domyślne ID
+        
+        if (currentBoard && currentBoard.length > 0) {
+            boardId = currentBoard[0].ID;
+        }
+        
+        // Zaktualizuj tablicę w bazie
+        await apiRequest('board', 'PUT', { 
+            id: boardId,
+            content: boardEditor.value 
+        });
         
         boardContent.textContent = boardEditor.value;
         cancelBoardEditing();
@@ -269,14 +306,13 @@ function startChatPolling() {
     pollingInterval = setInterval(loadMessages, 2000);
 }
 
-// Ładowanie wiadomości czatu
+// Ładowanie wiadomości czatu Z BAZY DANYCH
 async function loadMessages() {
     const chatMessages = document.getElementById('chatMessages');
     
     try {
-        // Symulacja pobierania wiadomości
+        // Pobierz wiadomości z bazy
         const messages = await apiRequest('messages');
-        // W rzeczywistości: const messages = await apiRequest('messages');
         
         chatMessages.innerHTML = '';
         
@@ -286,8 +322,9 @@ async function loadMessages() {
         }
         
         messages.forEach(msg => {
-            const time = new Date(msg.timestamp).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            displayMessage(msg.user_name, msg.content, time);
+            const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const username = msg.username || `Użytkownik ${msg.user_ID}`;
+            displayMessage(username, msg.content, time);
         });
     } catch (error) {
         console.error('Błąd ładowania wiadomości:', error);
@@ -312,19 +349,18 @@ function displayMessage(user, message, time) {
     chatMessages.scrollTop = chatMessages.scrollHeight;
 }
 
-// Wysyłanie wiadomości
+// Wysyłanie wiadomości DO BAZY DANYCH
 async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     const message = messageInput.value.trim();
     
-    if (message && authToken) {
+    if (message && currentUser) {
         try {
-            // Symulacja wysyłania wiadomości
+            // Wyślij wiadomość do bazy
             await apiRequest('messages', 'POST', {
                 content: message,
-                user_id: currentUser.id,
-                user_name: currentUser.name,
-                timestamp: new Date().toISOString()
+                user_ID: currentUser.id,
+                username: currentUser.name
             });
             
             const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
@@ -333,11 +369,12 @@ async function sendMessage() {
             
         } catch (error) {
             console.error('Błąd wysyłania wiadomości:', error);
+            alert('Błąd wysyłania wiadomości: ' + error.message);
         }
     }
 }
 
-// Ładowanie użytkowników
+// Ładowanie użytkowników Z BAZY DANYCH
 async function loadUsers() {
     const usersList = document.getElementById('usersList');
     const usersLoading = document.getElementById('usersLoading');
@@ -345,9 +382,8 @@ async function loadUsers() {
     try {
         usersLoading.style.display = 'block';
         
-        // Symulacja pobierania użytkowników
+        // Pobierz użytkowników z bazy
         const users = await apiRequest('users');
-        // W rzeczywistości: const users = await apiRequest('users');
         
         usersLoading.style.display = 'none';
         usersList.innerHTML = '';
@@ -355,8 +391,8 @@ async function loadUsers() {
         users.forEach(user => {
             const userItem = document.createElement('li');
             userItem.innerHTML = `
-                <span class="status-indicator ${user.online ? 'online' : 'offline'}"></span>
-                ${user.name} ${user.role === 'teacher' ? '(Nauczyciel)' : ''}
+                <span class="status-indicator ${user.is_online ? 'online' : 'offline'}"></span>
+                ${user.username} ${user.role === 'teacher' ? '(Nauczyciel)' : ''}
             `;
             usersList.appendChild(userItem);
         });
@@ -365,7 +401,7 @@ async function loadUsers() {
     }
 }
 
-// Ładowanie notatek
+// Ładowanie notatek Z BAZY DANYCH
 async function loadNotes() {
     const notesContainer = document.getElementById('notesContainer');
     const notesLoading = document.getElementById('notesLoading');
@@ -373,9 +409,8 @@ async function loadNotes() {
     try {
         notesLoading.style.display = 'block';
         
-        // Symulacja pobierania notatek
-        const notes = await apiRequest('notes');
-        // W rzeczywistości: const notes = await apiRequest('notes');
+        // Pobierz notatki z bazy dla zalogowanego użytkownika
+        const notes = await apiRequest(`notes?user_id=${currentUser.id}`);
         
         notesLoading.style.display = 'none';
         notesContainer.innerHTML = '';
@@ -398,69 +433,77 @@ async function loadNotes() {
 function createNoteElement(note, index) {
     const noteElement = document.createElement('div');
     noteElement.className = 'note-item';
+    noteElement.dataset.noteId = note.ID;
     
     noteElement.innerHTML = `
         <div class="note-header">
-            <span class="note-date">${new Date(note.timestamp).toLocaleString()}</span>
+            <span class="note-date">${new Date(note.updated_at || note.created_at).toLocaleString()}</span>
             <div class="note-actions">
-                <button class="delete-note" data-index="${index}">Usuń</button>
+                <button class="delete-note" data-note-id="${note.ID}">Usuń</button>
             </div>
         </div>
-        <textarea class="note-content" data-index="${index}">${note.content}</textarea>
+        <textarea class="note-content" data-note-id="${note.ID}">${note.content}</textarea>
     `;
     
     // Dodaj obsługę usuwania notatki
     const deleteBtn = noteElement.querySelector('.delete-note');
     deleteBtn.addEventListener('click', function() {
-        deleteNote(index);
+        deleteNote(note.ID);
     });
     
     return noteElement;
 }
 
-// Dodawanie nowej notatki
-function addNewNote() {
+// Dodawanie nowej notatki DO BAZY DANYCH
+async function addNewNote() {
     const notesContainer = document.getElementById('notesContainer');
     
-    const newNote = {
-        id: Date.now(),
-        content: '',
-        timestamp: new Date().toISOString()
-    };
-    
-    const noteElement = createNoteElement(newNote, -1);
-    notesContainer.appendChild(noteElement);
-}
-
-// Usuwanie notatki
-function deleteNote(index) {
-    const notesContainer = document.getElementById('notesContainer');
-    const noteElements = notesContainer.querySelectorAll('.note-item');
-    
-    if (noteElements[index]) {
-        noteElements[index].remove();
+    try {
+        // Utwórz nową notatkę w bazie
+        const response = await apiRequest('notes', 'POST', {
+            user_ID: currentUser.id,
+            title: 'Nowa notatka',
+            content: ''
+        });
+        
+        if (response.success) {
+            // Załaduj notatki ponownie
+            loadNotes();
+        }
+    } catch (error) {
+        alert('Błąd tworzenia notatki: ' + error.message);
     }
 }
 
-// Zapis wszystkich notatek
+// Usuwanie notatki Z BAZY DANYCH
+async function deleteNote(noteId) {
+    try {
+        await apiRequest(`notes/${noteId}`, 'DELETE');
+        // Załaduj notatki ponownie
+        loadNotes();
+    } catch (error) {
+        alert('Błąd usuwania notatki: ' + error.message);
+    }
+}
+
+// Zapis wszystkich notatek DO BAZY DANYCH
 async function saveAllNotes() {
     const noteElements = document.querySelectorAll('.note-item');
-    const notes = [];
-    
-    noteElements.forEach(element => {
-        const textarea = element.querySelector('.note-content');
-        if (textarea.value.trim()) {
-            notes.push({
-                content: textarea.value.trim(),
-                timestamp: new Date().toISOString()
-            });
-        }
-    });
     
     try {
-        // Symulacja zapisu notatek
-        await apiRequest('notes', 'POST', { notes });
-        // W rzeczywistości: await apiRequest('notes', 'POST', { notes });
+        for (const element of noteElements) {
+            const noteId = element.dataset.noteId;
+            const textarea = element.querySelector('.note-content');
+            const content = textarea.value.trim();
+            
+            if (content) {
+                await apiRequest('notes', 'PUT', {
+                    id: noteId,
+                    content: content,
+                    title: 'Notatka'
+                });
+            }
+        }
         
         alert('Notatki zostały zapisane!');
         
@@ -469,73 +512,17 @@ async function saveAllNotes() {
     }
 }
 
-// Dane testowe dla symulacji API
-// W rzeczywistej aplikacji te dane będą pochodzić z API
-const mockData = {
-    board: { content: "Witajcie na tablicy nauczyciela!\n\nDzisiejsze tematy:\n1. Wprowadzenie do JavaScript\n2. Praca z API\n3. Projekt grupowy\n\nZadanie domowe: Stworzenie prostej aplikacji webowej." },
-    messages: [
-        { user_name: "Nauczyciel", content: "Witam wszystkich na czacie!", timestamp: new Date(Date.now() - 300000).toISOString() },
-        { user_name: "Uczeń1", content: "Dzień dobry, mam pytanie odnośnie zadania domowego", timestamp: new Date(Date.now() - 120000).toISOString() },
-        { user_name: "Uczeń2", content: "Ja też mam pytanie", timestamp: new Date(Date.now() - 60000).toISOString() }
-    ],
-    users: [
-        { name: "Nauczyciel", online: true, role: "teacher" },
-        { name: "Uczeń1", online: true, role: "student" },
-        { name: "Uczeń2", online: true, role: "student" },
-        { name: "Uczeń3", online: false, role: "student" }
-    ],
-    notes: [
-        { content: "Przeczytać rozdział 5 z podręcznika", timestamp: new Date(Date.now() - 86400000).toISOString() },
-        { content: "Przygotować się do testu z JavaScript", timestamp: new Date().toISOString() }
-    ]
-};
-
-// Mockowanie API dla celów demonstracyjnych
-window.apiRequest = async function(endpoint, method = 'GET', data = null) {
-    // Symulacja opóźnienia sieci
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    switch (endpoint) {
-        case 'board':
-            if (method === 'GET') {
-                return mockData.board;
-            } else if (method === 'PUT') {
-                mockData.board.content = data.content;
-                return { success: true };
-            }
-            break;
-            
-        case 'messages':
-            if (method === 'GET') {
-                return mockData.messages;
-            } else if (method === 'POST') {
-                mockData.messages.push({
-                    user_name: data.user_name,
-                    content: data.content,
-                    timestamp: data.timestamp
-                });
-                return { success: true };
-            }
-            break;
-            
-        case 'users':
-            return mockData.users;
-            
-        case 'notes':
-            if (method === 'GET') {
-                return mockData.notes;
-            } else if (method === 'POST') {
-                // W rzeczywistej aplikacji tutaj byłby zapis do bazy
-                return { success: true };
-            }
-            break;
-            
-        default:
-            throw new Error('Endpoint nie istnieje');
-    }
-};
 // Wylogowanie użytkownika
-function logout() {
+async function logout() {
+    try {
+        // Zaktualizuj status użytkownika w bazie
+        if (currentUser) {
+            await apiRequest(`users/${currentUser.id}`, 'PUT');
+        }
+    } catch (error) {
+        console.error('Błąd podczas wylogowania:', error);
+    }
+    
     // Czyścimy dane o użytkowniku
     currentUser = null;
     authToken = null;
@@ -556,5 +543,11 @@ function logout() {
     document.querySelector('.nav-link[data-tab="tab1"]').click();
 
     // Ukrywamy przycisk wylogowania
-    document.getElementById('logoutBtn').style.display = 'none';
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'none';
+    }
+    
+    // Czyścimy formularz logowania
+    document.getElementById('loginForm').reset();
 }
