@@ -16,6 +16,7 @@ document.addEventListener('DOMContentLoaded', function() {
 function initializeApp() {
     const navLinks = document.querySelectorAll('.nav-link');
     const tabContents = document.querySelectorAll('.tab-content');
+    document.getElementById('logoutBtn').addEventListener('click', logout);
     
     navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
