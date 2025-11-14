@@ -120,6 +120,7 @@ async function simulateLogin(login, password, role) {
 
 // Aktualizacja interfejsu po zalogowaniu
 function updateUserInterface() {
+    document.getElementById('logoutBtn').style.display = 'block';
     const userInfo = document.getElementById('userInfo');
     const userName = document.getElementById('userName');
     const userRole = document.getElementById('userRole');
