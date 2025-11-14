@@ -1,7 +1,7 @@
 
 // Konfiguracja API
 const API_BASE_URL = 'localhost\GW4p\Czato-Notatnik-4P2\api.php';
- 
+
 // Globalne zmienne
 let currentUser = null;
 let authToken = null;
