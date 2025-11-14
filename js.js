@@ -532,3 +532,27 @@ window.apiRequest = async function(endpoint, method = 'GET', data = null) {
             throw new Error('Endpoint nie istnieje');
     }
 };
+// Wylogowanie użytkownika
+function logout() {
+    // Czyścimy dane o użytkowniku
+    currentUser = null;
+    authToken = null;
+    currentRole = null;
+
+    // Zatrzymujemy polling czatu
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+
+    // Ukrywamy sekcję informacji o użytkowniku
+    const userInfo = document.getElementById('userInfo');
+    userInfo.style.display = 'none';
+
+    // Pokazujemy zakładkę logowania
+    document.querySelector('.nav-link[data-tab="tab1"]').parentElement.style.display = 'block';
+    document.querySelector('.nav-link[data-tab="tab1"]').click();
+
+    // Ukrywamy przycisk wylogowania
+    document.getElementById('logoutBtn').style.display = 'none';
+}

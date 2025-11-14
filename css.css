@@ -472,3 +472,31 @@ body {
         flex-direction: column;
     }
 }
+/* Przyciski w panelu bocznym - Wyloguj się */
+.logout-btn {
+    width: calc(100% - 40px); /* dopasowanie do paddingu sidebar */
+    margin: 10px 20px 0 20px;
+    padding: 12px 0;
+    
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
