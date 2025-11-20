@@ -103,13 +103,17 @@ function initializeApp() {
     document.getElementById('saveNotesBtn').addEventListener('click', saveAllNotes);
 }
 
-// PRAWDZIWE logowanie z API
+// PRAWDZIWE logowanie z API - POPRAWIONE
 async function realLogin(login, password, role) {
     try {
+        console.log('Logowanie:', login, role);
+        
         const response = await apiRequest('users', 'POST', {
             username: login,
             password: password
         });
+
+        console.log('Odpowiedź logowania:', response);
 
         if (response.success && response.user) {
             // Sprawdź czy wybrana rola zgadza się z rolą w bazie
@@ -125,6 +129,8 @@ async function realLogin(login, password, role) {
             currentRole = response.user.role;
             authToken = 'token_' + Date.now();
 
+            console.log('Zalogowano:', currentUser);
+
             // Aktualizacja interfejsu użytkownika
             updateUserInterface();
             return response;
@@ -132,6 +138,7 @@ async function realLogin(login, password, role) {
             throw new Error('Nieprawidłowe dane logowania');
         }
     } catch (error) {
+        console.error('Błąd logowania:', error);
         throw new Error(error.message || 'Błąd logowania');
     }
 }
@@ -173,31 +180,35 @@ function setupBoardPermissions() {
 // Funkcja do wykonywania zapytań do API
 async function apiRequest(endpoint, method = 'GET', data = null) {
     const url = `${API_BASE_URL}/${endpoint}`;
+    console.log(`API Request: ${method} ${url}`, data);
+    
     const options = {
         method: method,
         headers: {
             'Content-Type': 'application/json',
         }
     };
-
+    
     // Dodaj token autoryzacyjny jeśli dostępny
     if (authToken) {
         options.headers['Authorization'] = `Bearer ${authToken}`;
     }
-
+    
     // Dodaj dane dla metod POST, PUT
     if (data && (method === 'POST' || method === 'PUT')) {
         options.body = JSON.stringify(data);
     }
-
+    
     try {
         const response = await fetch(url, options);
-
+        console.log(`API Response status: ${response.status}`);
+        
         if (!response.ok) {
-            throw new Error(`Błąd HTTP: ${response.status}`);
+            throw new Error(`Błąd HTTP: ${response.status} ${response.statusText}`);
         }
-
+        
         const result = await response.json();
+        console.log('API Response data:', result);
         return result;
     } catch (error) {
         console.error('Błąd API:', error);
@@ -233,6 +244,12 @@ async function loadTeacherBoard() {
 
 // Włączanie edycji tablicy
 function enableBoardEditing() {
+    // SPRAWDŹ CZY NAUCZYCIEL
+    if (currentRole !== 'teacher') {
+        alert('Tylko nauczyciel może edytować tablicę!');
+        return;
+    }
+    
     const boardContent = document.getElementById('boardContent');
     const boardEditor = document.getElementById('boardEditor');
     const editBtn = document.getElementById('editBoardBtn');
@@ -266,6 +283,12 @@ function cancelBoardEditing() {
 
 // Zapis treści tablicy DO BAZY DANYCH
 async function saveBoardContent() {
+    // SPRAWDŹ CZY NAUCZYCIEL
+    if (currentRole !== 'teacher') {
+        alert('Tylko nauczyciel może edytować tablicę!');
+        return;
+    }
+    
     const boardEditor = document.getElementById('boardEditor');
     const boardContent = document.getElementById('boardContent');
 
@@ -286,6 +309,7 @@ async function saveBoardContent() {
 
         boardContent.textContent = boardEditor.value;
         cancelBoardEditing();
+        alert('Tablica została zaktualizowana!');
 
     } catch (error) {
         alert('Błąd zapisywania tablicy: ' + error.message);
@@ -363,14 +387,16 @@ async function sendMessage() {
                 username: currentUser.name
             });
 
-            const currentTime = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-            displayMessage(currentUser.name, message, currentTime);
             messageInput.value = '';
-
+            // Automatycznie odśwież wiadomości
+            loadMessages();
+            
         } catch (error) {
             console.error('Błąd wysyłania wiadomości:', error);
             alert('Błąd wysyłania wiadomości: ' + error.message);
         }
+    } else if (!currentUser) {
+        alert('Musisz być zalogowany aby wysłać wiadomość!');
     }
 }
 
@@ -401,25 +427,31 @@ async function loadUsers() {
     }
 }
 
-// Ładowanie notatek Z BAZY DANYCH
+// Ładowanie notatek Z BAZY DANYCH - POPRAWIONE
 async function loadNotes() {
     const notesContainer = document.getElementById('notesContainer');
     const notesLoading = document.getElementById('notesLoading');
+    
+    // SPRAWDŹ CZY UŻYTKOWNIK JEST ZALOGOWANY
+    if (!currentUser || !currentUser.id) {
+        notesLoading.innerHTML = '<div class="error">Musisz być zalogowany aby zobaczyć notatki</div>';
+        return;
+    }
 
     try {
         notesLoading.style.display = 'block';
-
+        
         // Pobierz notatki z bazy dla zalogowanego użytkownika
         const notes = await apiRequest(`notes?user_id=${currentUser.id}`);
-
+        
         notesLoading.style.display = 'none';
         notesContainer.innerHTML = '';
-
+        
         if (notes.length === 0) {
             notesContainer.innerHTML = '<div class="loading">Brak notatek. Kliknij "Dodaj notatkę" aby utworzyć pierwszą.</div>';
             return;
         }
-
+        
         notes.forEach((note, index) => {
             const noteElement = createNoteElement(note, index);
             notesContainer.appendChild(noteElement);
@@ -454,16 +486,20 @@ function createNoteElement(note, index) {
     return noteElement;
 }
 
-// Dodawanie nowej notatki DO BAZY DANYCH
+// Dodawanie nowej notatki DO BAZY DANYCH - POPRAWIONE
 async function addNewNote() {
-    const notesContainer = document.getElementById('notesContainer');
+    // SPRAWDŹ CZY ZALOGOWANY
+    if (!currentUser || !currentUser.id) {
+        alert('Musisz być zalogowany aby dodawać notatki!');
+        return;
+    }
 
     try {
         // Utwórz nową notatkę w bazie
         const response = await apiRequest('notes', 'POST', {
             user_ID: currentUser.id,
             title: 'Nowa notatka',
-            content: ''
+            content: 'Twoja nowa notatka...'
         });
 
         if (response.success) {
@@ -486,17 +522,23 @@ async function deleteNote(noteId) {
     }
 }
 
-// Zapis wszystkich notatek DO BAZY DANYCH
+// Zapis wszystkich notatek DO BAZY DANYCH - POPRAWIONE
 async function saveAllNotes() {
-    const noteElements = document.querySelectorAll('.note-item');
+    // SPRAWDŹ CZY ZALOGOWANY
+    if (!currentUser || !currentUser.id) {
+        alert('Musisz być zalogowany aby zapisywać notatki!');
+        return;
+    }
 
+    const noteElements = document.querySelectorAll('.note-item');
+    
     try {
         for (const element of noteElements) {
             const noteId = element.dataset.noteId;
             const textarea = element.querySelector('.note-content');
             const content = textarea.value.trim();
-
-            if (content) {
+            
+            if (content && noteId) {
                 await apiRequest('notes', 'PUT', {
                     id: noteId,
                     content: content,
@@ -504,9 +546,9 @@ async function saveAllNotes() {
                 });
             }
         }
-
+        
         alert('Notatki zostały zapisane!');
-
+        
     } catch (error) {
         alert('Błąd zapisywania notatek: ' + error.message);
     }
