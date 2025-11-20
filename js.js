@@ -592,4 +592,104 @@ async function logout() {
 
     // Czyścimy formularz logowania
     document.getElementById('loginForm').reset();
+
+    ////////////////////////////////////////////////////////////////////////////////////////
+    /////////////////////////////////////TEST////CZY////DZIALA//////////////////////////////////////////
+
+    // TYMCZASOWE ROZWIĄZANIE - mock danych gdy API nie działa
+async function apiRequest(endpoint, method = 'GET', data = null) {
+    console.log(`Mock API: ${method} ${endpoint}`, data);
+    
+    // Symulacja opóźnienia sieci
+    await new Promise(resolve => setTimeout(resolve, 500));
+    
+    // Mock danych - tymczasowo używamy tych danych zamiast API
+    const mockData = {
+        board: [{ ID: 1, content: "Witajcie na tablicy nauczyciela!\n\nDzisiejsze tematy:\n1. Wprowadzenie do JavaScript\n2. Praca z API\n3. Projekt grupowy\n\nZadanie domowe: Stworzenie prostej aplikacji webowej.", timestamp: "2025-11-07 14:45:00" }],
+        
+        messages: [
+            { ID: 1, user_ID: 1, username: "nauczyciel", content: "Witam wszystkich na czacie!", created_at: "2025-11-07 13:46:00" },
+            { ID: 2, user_ID: 2, username: "uczen1", content: "Dzień dobry, mam pytanie odnośnie zadania domowego", created_at: "2025-11-07 13:47:00" },
+            { ID: 3, user_ID: 3, username: "uczen2", content: "Ja też mam pytanie", created_at: "2025-11-07 13:48:00" }
+        ],
+        
+        users: [
+            { ID: 1, username: "nauczyciel", role: "teacher", is_online: 1 },
+            { ID: 2, username: "uczen1", role: "student", is_online: 1 },
+            { ID: 3, username: "uczen2", role: "student", is_online: 1 },
+            { ID: 4, username: "uczen3", role: "student", is_online: 0 }
+        ],
+        
+        notes: [
+            { ID: 1, user_ID: 2, title: "Zadanie domowe", content: "Przeczytać rozdział 5 z podręcznika", created_at: "2025-11-07 13:49:00", updated_at: "2025-11-07 13:49:00" },
+            { ID: 2, user_ID: 2, title: "Przygotowanie do testu", content: "Przygotować się do testu z JavaScript", created_at: "2025-11-07 13:50:00", updated_at: "2025-11-07 13:50:00" }
+        ]
+    };
+    
+    // Mock logowania
+    if (endpoint === 'users' && method === 'POST') {
+        const users = {
+            'uczen1': { ID: 2, username: 'uczen1', role: 'student' },
+            'uczen2': { ID: 3, username: 'uczen2', role: 'student' },
+            'uczen3': { ID: 4, username: 'uczen3', role: 'student' },
+            'nauczyciel': { ID: 1, username: 'nauczyciel', role: 'teacher' }
+        };
+        
+        if (users[data.username] && data.password === 'password') {
+            return { 
+                success: true, 
+                user: users[data.username] 
+            };
+        } else {
+            throw new Error('Nieprawidłowe dane logowania');
+        }
+    }
+    
+    // Zwróć mock dane
+    if (mockData[endpoint]) {
+        return mockData[endpoint];
+    }
+    
+    throw new Error(`Endpoint ${endpoint} not found in mock data`);
+}
+
+// ZMIEŃ realLogin na użycie mock danych
+async function realLogin(login, password, role) {
+    try {
+        console.log('Logowanie (MOCK):', login, role);
+        
+        const response = await apiRequest('users', 'POST', {
+            username: login,
+            password: password
+        });
+
+        console.log('Odpowiedź logowania (MOCK):', response);
+
+        if (response.success && response.user) {
+            // Sprawdź czy wybrana rola zgadza się z rolą w bazie
+            if (response.user.role !== role) {
+                throw new Error('Wybrana rola nie zgadza się z kontem');
+            }
+
+            currentUser = {
+                id: response.user.ID,
+                name: response.user.username,
+                role: response.user.role
+            };
+            currentRole = response.user.role;
+            authToken = 'token_' + Date.now();
+
+            console.log('Zalogowano (MOCK):', currentUser);
+
+            // Aktualizacja interfejsu użytkownika
+            updateUserInterface();
+            return response;
+        } else {
+            throw new Error('Nieprawidłowe dane logowania');
+        }
+    } catch (error) {
+        console.error('Błąd logowania (MOCK):', error);
+        throw new Error(error.message || 'Błąd logowania');
+    }
+}
 }
