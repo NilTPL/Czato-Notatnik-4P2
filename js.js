@@ -692,4 +692,6 @@ async function realLogin(login, password, role) {
         throw new Error(error.message || 'Błąd logowania');
     }
 }
+
+
 }
