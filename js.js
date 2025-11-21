@@ -1,79 +1,167 @@
-// Konfiguracja API - UŻYWAMY RELATYWNEJ ŚCIEŻKI
+// Konfiguracja API
 const API_BASE_URL = '/GW4p/Czato-Notatnik-4P2/api.php';
 
 // Globalne zmienne
 let currentUser = null;
 let currentRole = null;
+let pollingInterval = null;
 
-// Inicjalizacja aplikacji
+// Obsługa przełączania zakładek
 document.addEventListener('DOMContentLoaded', function() {
     initializeApp();
 });
 
 function initializeApp() {
-    // Obsługa zakładek
-    document.querySelectorAll('.nav-link').forEach(link => {
+    const navLinks = document.querySelectorAll('.nav-link');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // Sprawdź czy przycisk logout istnieje przed dodaniem event listenera
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', logout);
+    }
+
+    navLinks.forEach(link => {
         link.addEventListener('click', function(e) {
             e.preventDefault();
-            
-            // Zmiana aktywnej zakładki
-            document.querySelectorAll('.nav-link').forEach(item => item.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
-            
+
+            // Usuń klasę active ze wszystkich linków
+            navLinks.forEach(item => item.classList.remove('active'));
+
+            // Dodaj klasę active do klikniętego linku
             this.classList.add('active');
+
+            // Ukryj wszystkie zakładki
+            tabContents.forEach(tab => tab.classList.remove('active'));
+
+            // Pokaż odpowiednią zakładkę
             const tabId = this.getAttribute('data-tab');
             document.getElementById(tabId).classList.add('active');
-            
-            // Ładowanie danych dla zakładki
+
+            // Załaduj dane dla aktywnej zakładki
             if (tabId === 'tab2') {
                 loadTeacherBoard();
                 setupBoardPermissions();
-            }
-            if (tabId === 'tab3') {
-                loadMessages();
+            } else if (tabId === 'tab3') {
+                startChatPolling();
                 loadUsers();
+            } else if (tabId === 'tab4') {
+                loadNotes();
             }
-            if (tabId === 'tab4') loadNotes();
         });
     });
 
-    // Logowanie
-    document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    // OBSŁUGA REJESTRACJI - DODANE
+    document.getElementById('showRegister').addEventListener('click', showRegisterForm);
+    document.getElementById('showLogin').addEventListener('click', showLoginForm);
+    document.getElementById('registerForm').addEventListener('submit', handleRegister);
+
+    // Obsługa formularza logowania
+    const loginForm = document.getElementById('loginForm');
+    const loginError = document.getElementById('loginError');
+
+    loginForm.addEventListener('submit', async function(e) {
         e.preventDefault();
         const login = document.getElementById('login').value;
         const password = document.getElementById('password').value;
         const role = document.getElementById('role').value;
 
         try {
+            // PRAWDZIWE logowanie z API
             await realLogin(login, password, role);
-            document.getElementById('loginError').style.display = 'none';
+
+            loginError.style.display = 'none';
+
+            // Przejdź do zakładki Tablica nauczyciela po zalogowaniu
             document.querySelector('.nav-link[data-tab="tab2"]').click();
+
         } catch (error) {
-            document.getElementById('loginError').textContent = error.message;
-            document.getElementById('loginError').style.display = 'block';
+            loginError.textContent = error.message || 'Błąd logowania';
+            loginError.style.display = 'block';
         }
     });
 
-    // Czat
-    document.getElementById('sendMessage').addEventListener('click', sendMessage);
-    document.getElementById('messageInput').addEventListener('keypress', function(e) {
-        if (e.key === 'Enter') sendMessage();
+    // Obsługa czatu
+    const messageInput = document.getElementById('messageInput');
+    const sendMessageBtn = document.getElementById('sendMessage');
+
+    // Obsługa wysyłania nowej wiadomości
+    sendMessageBtn.addEventListener('click', async function() {
+        await sendMessage();
     });
 
-    // Tablica
+    // Wysyłanie wiadomości po naciśnięciu Enter
+    messageInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') {
+            sendMessage();
+        }
+    });
+
+    // Obsługa tablicy nauczyciela
     document.getElementById('editBoardBtn').addEventListener('click', enableBoardEditing);
     document.getElementById('saveBoardBtn').addEventListener('click', saveBoardContent);
     document.getElementById('cancelEditBtn').addEventListener('click', cancelBoardEditing);
 
-    // Notatki
+    // Obsługa notatek
     document.getElementById('addNoteBtn').addEventListener('click', addNewNote);
     document.getElementById('saveNotesBtn').addEventListener('click', saveAllNotes);
-
-    // Wylogowanie
-    document.getElementById('logoutBtn').addEventListener('click', logout);
 }
 
-// PRAWDZIWE LOGOWANIE
+// FUNKCJE REJESTRACJI - DODANE
+function showRegisterForm(e) {
+    e.preventDefault();
+    document.getElementById('loginForm').style.display = 'none';
+    document.getElementById('registerForm').style.display = 'block';
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('registerError').style.display = 'none';
+    document.getElementById('registerSuccess').style.display = 'none';
+}
+
+function showLoginForm(e) {
+    e.preventDefault();
+    document.getElementById('registerForm').style.display = 'none';
+    document.getElementById('loginForm').style.display = 'block';
+    document.getElementById('loginError').style.display = 'none';
+    document.getElementById('registerError').style.display = 'none';
+    document.getElementById('registerSuccess').style.display = 'none';
+}
+
+async function handleRegister(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('regUsername').value;
+    const password = document.getElementById('regPassword').value;
+    const role = document.getElementById('regRole').value;
+
+    try {
+        const response = await apiRequest('register', 'POST', {
+            username: username,
+            password: password,
+            role: role
+        });
+
+        if (response.success) {
+            // Sukces - pokaz komunikat i wróć do logowania
+            document.getElementById('registerError').style.display = 'none';
+            document.getElementById('registerSuccess').textContent = response.message;
+            document.getElementById('registerSuccess').style.display = 'block';
+            
+            // Wyczyść formularz
+            document.getElementById('registerForm').reset();
+            
+            // Automatycznie wróć do logowania po 2 sekundach
+            setTimeout(() => {
+                showLoginForm(e);
+            }, 2000);
+        }
+    } catch (error) {
+        document.getElementById('registerError').textContent = error.message;
+        document.getElementById('registerError').style.display = 'block';
+        document.getElementById('registerSuccess').style.display = 'none';
+    }
+}
+
+// PRAWDZIWE logowanie z API
 async function realLogin(login, password, role) {
     try {
         const response = await apiRequest('users', 'POST', {
@@ -82,6 +170,7 @@ async function realLogin(login, password, role) {
         });
 
         if (response.success && response.user) {
+            // Sprawdź czy wybrana rola zgadza się z rolą w bazie
             if (response.user.role !== role) {
                 throw new Error('Wybrana rola nie zgadza się z kontem');
             }
@@ -93,6 +182,7 @@ async function realLogin(login, password, role) {
             };
             currentRole = response.user.role;
 
+            // Aktualizacja interfejsu użytkownika
             updateUserInterface();
             return response;
         } else {
@@ -103,21 +193,31 @@ async function realLogin(login, password, role) {
     }
 }
 
-// Aktualizacja interfejsu po logowaniu
+// Aktualizacja interfejsu po zalogowaniu
 function updateUserInterface() {
-    document.getElementById('userInfo').style.display = 'block';
-    document.getElementById('userName').textContent = currentUser.name;
-    document.getElementById('userRole').textContent = currentRole === 'teacher' ? 'Nauczyciel' : 'Uczeń';
-    document.getElementById('userRole').className = `role-badge ${currentRole}`;
-    document.getElementById('logoutBtn').style.display = 'block';
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'block';
+    }
+
+    const userInfo = document.getElementById('userInfo');
+    const userName = document.getElementById('userName');
+    const userRole = document.getElementById('userRole');
+
+    userInfo.style.display = 'block';
+    userName.textContent = currentUser.name;
+    userRole.textContent = currentRole === 'teacher' ? 'Nauczyciel' : 'Uczeń';
+    userRole.className = `role-badge ${currentRole}`;
+
+    // Ukryj zakładkę logowania
     document.querySelector('.nav-link[data-tab="tab1"]').parentElement.style.display = 'none';
 }
 
-// Uprawnienia tablicy
+// Ustawienia uprawnień tablicy
 function setupBoardPermissions() {
     const editBtn = document.getElementById('editBoardBtn');
     const permissionInfo = document.getElementById('permissionInfo');
-    
+
     if (currentRole === 'teacher') {
         editBtn.style.display = 'inline-block';
         permissionInfo.style.display = 'none';
@@ -127,9 +227,9 @@ function setupBoardPermissions() {
     }
 }
 
-// API REQUEST - POPRAWIONE
+// Funkcja do wykonywania zapytań do API
 async function apiRequest(endpoint, method = 'GET', data = null) {
-    const url = API_BASE_URL + '/' + endpoint;
+    const url = `${API_BASE_URL}/${endpoint}`;
     
     const options = {
         method: method,
@@ -146,7 +246,9 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
         const response = await fetch(url, options);
         
         if (!response.ok) {
-            throw new Error(`Błąd HTTP: ${response.status}`);
+            // Spróbuj parsować błąd z JSON
+            const errorData = await response.json().catch(() => null);
+            throw new Error(errorData?.error || `Błąd HTTP: ${response.status}`);
         }
         
         return await response.json();
@@ -156,122 +258,204 @@ async function apiRequest(endpoint, method = 'GET', data = null) {
     }
 }
 
-// Tablica nauczyciela
+// Ładowanie tablicy nauczyciela Z BAZY DANYCH
 async function loadTeacherBoard() {
+    const boardContent = document.getElementById('boardContent');
+    const boardLoading = document.getElementById('boardLoading');
+
     try {
-        document.getElementById('boardLoading').style.display = 'block';
+        boardLoading.style.display = 'block';
+
+        // Pobierz dane z API - prawdziwe dane z bazy
         const boardData = await apiRequest('board');
-        document.getElementById('boardLoading').style.display = 'none';
-        
+
+        boardLoading.style.display = 'none';
+
         if (boardData && boardData.length > 0) {
-            document.getElementById('boardContent').textContent = boardData[0].content;
+            // Weź pierwszą (lub najnowszą) tablicę
+            const latestBoard = boardData[0];
+            boardContent.textContent = latestBoard.content || 'Tablica jest pusta.';
         } else {
-            document.getElementById('boardContent').textContent = 'Tablica jest pusta.';
+            boardContent.textContent = 'Tablica jest pusta. Kliknij "Edytuj tablicę" aby dodać treść.';
         }
+
     } catch (error) {
-        document.getElementById('boardLoading').innerHTML = `<div class="error">Błąd: ${error.message}</div>`;
+        boardLoading.innerHTML = `<div class="error">Błąd ładowania tablicy: ${error.message}</div>`;
     }
 }
 
-// Edycja tablicy
+// Włączanie edycji tablicy
 function enableBoardEditing() {
+    // SPRAWDŹ CZY NAUCZYCIEL
     if (currentRole !== 'teacher') {
         alert('Tylko nauczyciel może edytować tablicę!');
         return;
     }
     
-    const content = document.getElementById('boardContent').textContent;
-    document.getElementById('boardContent').style.display = 'none';
-    document.getElementById('boardEditor').style.display = 'block';
-    document.getElementById('boardEditor').value = content;
-    
-    document.getElementById('editBoardBtn').style.display = 'none';
-    document.getElementById('saveBoardBtn').style.display = 'inline-block';
-    document.getElementById('cancelEditBtn').style.display = 'inline-block';
+    const boardContent = document.getElementById('boardContent');
+    const boardEditor = document.getElementById('boardEditor');
+    const editBtn = document.getElementById('editBoardBtn');
+    const saveBtn = document.getElementById('saveBoardBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+
+    boardContent.style.display = 'none';
+    boardEditor.style.display = 'block';
+    boardEditor.value = boardContent.textContent;
+
+    editBtn.style.display = 'none';
+    saveBtn.style.display = 'inline-block';
+    cancelBtn.style.display = 'inline-block';
 }
 
+// Anulowanie edycji tablicy
 function cancelBoardEditing() {
-    document.getElementById('boardContent').style.display = 'block';
-    document.getElementById('boardEditor').style.display = 'none';
-    document.getElementById('editBoardBtn').style.display = 'inline-block';
-    document.getElementById('saveBoardBtn').style.display = 'none';
-    document.getElementById('cancelEditBtn').style.display = 'none';
+    const boardContent = document.getElementById('boardContent');
+    const boardEditor = document.getElementById('boardEditor');
+    const editBtn = document.getElementById('editBoardBtn');
+    const saveBtn = document.getElementById('saveBoardBtn');
+    const cancelBtn = document.getElementById('cancelEditBtn');
+
+    boardContent.style.display = 'block';
+    boardEditor.style.display = 'none';
+
+    editBtn.style.display = 'inline-block';
+    saveBtn.style.display = 'none';
+    cancelBtn.style.display = 'none';
 }
 
+// Zapis treści tablicy DO BAZY DANYCH
 async function saveBoardContent() {
-    if (currentRole !== 'teacher') return;
+    // SPRAWDŹ CZY NAUCZYCIEL
+    if (currentRole !== 'teacher') {
+        alert('Tylko nauczyciel może edytować tablicę!');
+        return;
+    }
     
+    const boardEditor = document.getElementById('boardEditor');
+    const boardContent = document.getElementById('boardContent');
+
     try {
-        const content = document.getElementById('boardEditor').value;
-        const boardData = await apiRequest('board');
-        const boardId = boardData && boardData.length > 0 ? boardData[0].ID : 1;
-        
-        await apiRequest('board', 'PUT', { id: boardId, content: content });
-        document.getElementById('boardContent').textContent = content;
+        // Pobierz aktualną tablicę żeby poznać ID
+        const currentBoard = await apiRequest('board');
+        let boardId = 1; // Domyślne ID
+
+        if (currentBoard && currentBoard.length > 0) {
+            boardId = currentBoard[0].ID;
+        }
+
+        // Zaktualizuj tablicę w bazie
+        await apiRequest('board', 'PUT', { 
+            id: boardId,
+            content: boardEditor.value 
+        });
+
+        boardContent.textContent = boardEditor.value;
         cancelBoardEditing();
-        alert('Tablica zaktualizowana!');
+        alert('Tablica została zaktualizowana!');
+
     } catch (error) {
-        alert('Błąd: ' + error.message);
+        alert('Błąd zapisywania tablicy: ' + error.message);
     }
 }
 
-// Czat
+// Rozpoczęcie odpytywania czatu
+function startChatPolling() {
+    // Wyczyść istniejący interval
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+
+    // Załaduj wiadomości natychmiast
+    loadMessages();
+
+    // Ustaw odpytywanie co 2 sekundy
+    pollingInterval = setInterval(loadMessages, 2000);
+}
+
+// Ładowanie wiadomości czatu Z BAZY DANYCH
 async function loadMessages() {
+    const chatMessages = document.getElementById('chatMessages');
+
     try {
+        // Pobierz wiadomości z bazy
         const messages = await apiRequest('messages');
-        const chatMessages = document.getElementById('chatMessages');
+
         chatMessages.innerHTML = '';
-        
+
         if (messages.length === 0) {
             chatMessages.innerHTML = '<div class="loading">Brak wiadomości</div>';
             return;
         }
-        
+
         messages.forEach(msg => {
-            const time = new Date(msg.created_at).toLocaleTimeString();
-            const messageElement = document.createElement('div');
-            messageElement.className = 'message';
-            messageElement.innerHTML = `
-                <div class="message-header">
-                    <span class="message-user">${msg.username}</span>
-                    <span class="message-time">${time}</span>
-                </div>
-                <div class="message-content">${msg.content}</div>
-            `;
-            chatMessages.appendChild(messageElement);
+            const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+            const username = msg.username || `Użytkownik ${msg.user_ID}`;
+            displayMessage(username, msg.content, time);
         });
     } catch (error) {
-        console.error('Błąd wiadomości:', error);
+        console.error('Błąd ładowania wiadomości:', error);
     }
 }
 
+// Wyświetlanie wiadomości
+function displayMessage(user, message, time) {
+    const chatMessages = document.getElementById('chatMessages');
+    const messageElement = document.createElement('div');
+    messageElement.className = 'message';
+
+    messageElement.innerHTML = `
+        <div class="message-header">
+            <span class="message-user">${user}</span>
+            <span class="message-time">${time}</span>
+        </div>
+        <div class="message-content">${message}</div>
+    `;
+
+    chatMessages.appendChild(messageElement);
+    chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Wysyłanie wiadomości DO BAZY DANYCH
 async function sendMessage() {
     const messageInput = document.getElementById('messageInput');
     const message = messageInput.value.trim();
-    
+
     if (message && currentUser) {
         try {
+            // Wyślij wiadomość do bazy
             await apiRequest('messages', 'POST', {
                 content: message,
                 user_ID: currentUser.id,
                 username: currentUser.name
             });
-            
+
             messageInput.value = '';
-            loadMessages(); // Odśwież wiadomości
+            // Automatycznie odśwież wiadomości
+            loadMessages();
+            
         } catch (error) {
-            alert('Błąd wysyłania: ' + error.message);
+            console.error('Błąd wysyłania wiadomości:', error);
+            alert('Błąd wysyłania wiadomości: ' + error.message);
         }
+    } else if (!currentUser) {
+        alert('Musisz być zalogowany aby wysłać wiadomość!');
     }
 }
 
-// Użytkownicy
+// Ładowanie użytkowników Z BAZY DANYCH
 async function loadUsers() {
+    const usersList = document.getElementById('usersList');
+    const usersLoading = document.getElementById('usersLoading');
+
     try {
+        usersLoading.style.display = 'block';
+
+        // Pobierz użytkowników z bazy
         const users = await apiRequest('users');
-        const usersList = document.getElementById('usersList');
+
+        usersLoading.style.display = 'none';
         usersList.innerHTML = '';
-        
+
         users.forEach(user => {
             const userItem = document.createElement('li');
             userItem.innerHTML = `
@@ -281,95 +465,173 @@ async function loadUsers() {
             usersList.appendChild(userItem);
         });
     } catch (error) {
-        console.error('Błąd użytkowników:', error);
+        usersLoading.innerHTML = `<div class="error">Błąd ładowania użytkowników: ${error.message}</div>`;
     }
 }
 
-// Notatki
+// Ładowanie notatek Z BAZY DANYCH
 async function loadNotes() {
-    if (!currentUser) {
-        document.getElementById('notesLoading').innerHTML = '<div class="error">Zaloguj się</div>';
+    const notesContainer = document.getElementById('notesContainer');
+    const notesLoading = document.getElementById('notesLoading');
+    
+    // SPRAWDŹ CZY UŻYTKOWNIK JEST ZALOGOWANY
+    if (!currentUser || !currentUser.id) {
+        notesLoading.innerHTML = '<div class="error">Musisz być zalogowany aby zobaczyć notatki</div>';
         return;
     }
-    
+
     try {
-        document.getElementById('notesLoading').style.display = 'block';
-        const notes = await apiRequest(`notes?user_id=${currentUser.id}`);
-        document.getElementById('notesLoading').style.display = 'none';
+        notesLoading.style.display = 'block';
         
-        const container = document.getElementById('notesContainer');
-        container.innerHTML = '';
+        // Pobierz notatki z bazy dla zalogowanego użytkownika
+        const notes = await apiRequest(`notes?user_id=${currentUser.id}`);
+        
+        notesLoading.style.display = 'none';
+        notesContainer.innerHTML = '';
         
         if (notes.length === 0) {
-            container.innerHTML = '<div class="loading">Brak notatek</div>';
+            notesContainer.innerHTML = '<div class="loading">Brak notatek. Kliknij "Dodaj notatkę" aby utworzyć pierwszą.</div>';
             return;
         }
         
-        notes.forEach(note => {
-            const noteElement = document.createElement('div');
-            noteElement.className = 'note-item';
-            noteElement.innerHTML = `
-                <div class="note-header">
-                    <span class="note-date">${new Date(note.updated_at).toLocaleString()}</span>
-                    <button class="delete-note" onclick="deleteNote(${note.ID})">Usuń</button>
-                </div>
-                <textarea class="note-content">${note.content}</textarea>
-            `;
-            container.appendChild(noteElement);
+        notes.forEach((note, index) => {
+            const noteElement = createNoteElement(note, index);
+            notesContainer.appendChild(noteElement);
         });
     } catch (error) {
-        document.getElementById('notesLoading').innerHTML = `<div class="error">Błąd: ${error.message}</div>`;
+        notesLoading.innerHTML = `<div class="error">Błąd ładowania notatek: ${error.message}</div>`;
     }
 }
 
+// Tworzenie elementu notatki
+function createNoteElement(note, index) {
+    const noteElement = document.createElement('div');
+    noteElement.className = 'note-item';
+    noteElement.dataset.noteId = note.ID;
+
+    noteElement.innerHTML = `
+        <div class="note-header">
+            <span class="note-date">${new Date(note.updated_at || note.created_at).toLocaleString()}</span>
+            <div class="note-actions">
+                <button class="delete-note" data-note-id="${note.ID}">Usuń</button>
+            </div>
+        </div>
+        <textarea class="note-content" data-note-id="${note.ID}">${note.content}</textarea>
+    `;
+
+    // Dodaj obsługę usuwania notatki
+    const deleteBtn = noteElement.querySelector('.delete-note');
+    deleteBtn.addEventListener('click', function() {
+        deleteNote(note.ID);
+    });
+
+    return noteElement;
+}
+
+// Dodawanie nowej notatki DO BAZY DANYCH
 async function addNewNote() {
-    if (!currentUser) {
-        alert('Zaloguj się!');
+    // SPRAWDŹ CZY ZALOGOWANY
+    if (!currentUser || !currentUser.id) {
+        alert('Musisz być zalogowany aby dodawać notatki!');
         return;
     }
-    
+
     try {
-        await apiRequest('notes', 'POST', {
+        // Utwórz nową notatkę w bazie
+        const response = await apiRequest('notes', 'POST', {
             user_ID: currentUser.id,
             title: 'Nowa notatka',
-            content: 'Treść notatki...'
+            content: 'Twoja nowa notatka...'
         });
-        loadNotes();
+
+        if (response.success) {
+            // Załaduj notatki ponownie
+            loadNotes();
+        }
     } catch (error) {
-        alert('Błąd: ' + error.message);
+        alert('Błąd tworzenia notatki: ' + error.message);
     }
 }
 
+// Usuwanie notatki Z BAZY DANYCH
 async function deleteNote(noteId) {
     try {
         await apiRequest(`notes/${noteId}`, 'DELETE');
+        // Załaduj notatki ponownie
         loadNotes();
     } catch (error) {
-        alert('Błąd: ' + error.message);
+        alert('Błąd usuwania notatki: ' + error.message);
     }
 }
 
+// Zapis wszystkich notatek DO BAZY DANYCH
 async function saveAllNotes() {
-    if (!currentUser) return;
-    
-    const notes = document.querySelectorAll('.note-item');
-    for (const note of notes) {
-        const textarea = note.querySelector('.note-content');
-        const content = textarea.value.trim();
-        // Tutaj potrzebowałbyś ID notatki - uproszczone
+    // SPRAWDŹ CZY ZALOGOWANY
+    if (!currentUser || !currentUser.id) {
+        alert('Musisz być zalogowany aby zapisywać notatki!');
+        return;
     }
-    alert('Notatki zapisane!');
+
+    const noteElements = document.querySelectorAll('.note-item');
+    
+    try {
+        for (const element of noteElements) {
+            const noteId = element.dataset.noteId;
+            const textarea = element.querySelector('.note-content');
+            const content = textarea.value.trim();
+            
+            if (content && noteId) {
+                await apiRequest('notes', 'PUT', {
+                    id: noteId,
+                    content: content,
+                    title: 'Notatka'
+                });
+            }
+        }
+        
+        alert('Notatki zostały zapisane!');
+        
+    } catch (error) {
+        alert('Błąd zapisywania notatek: ' + error.message);
+    }
 }
 
-// Wylogowanie
-function logout() {
+// Wylogowanie użytkownika
+async function logout() {
+    try {
+        // Zaktualizuj status użytkownika w bazie
+        if (currentUser) {
+            await apiRequest(`users/${currentUser.id}`, 'PUT');
+        }
+    } catch (error) {
+        console.error('Błąd podczas wylogowania:', error);
+    }
+
+    // Czyścimy dane o użytkowniku
     currentUser = null;
     currentRole = null;
-    
-    document.getElementById('userInfo').style.display = 'none';
-    document.getElementById('logoutBtn').style.display = 'none';
+
+    // Zatrzymujemy polling czatu
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+        pollingInterval = null;
+    }
+
+    // Ukrywamy sekcję informacji o użytkowniku
+    const userInfo = document.getElementById('userInfo');
+    userInfo.style.display = 'none';
+
+    // Pokazujemy zakładkę logowania
     document.querySelector('.nav-link[data-tab="tab1"]').parentElement.style.display = 'block';
     document.querySelector('.nav-link[data-tab="tab1"]').click();
+
+    // Ukrywamy przycisk wylogowania
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.style.display = 'none';
+    }
+
+    // Czyścimy formularz logowania
     document.getElementById('loginForm').reset();
 }
 
