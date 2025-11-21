@@ -373,6 +373,7 @@ function startChatPolling() {
 }
 
 // Ładowanie wiadomości czatu Z BAZY DANYCH
+// Ładowanie wiadomości czatu Z BAZY DANYCH - POPRAWIONE
 async function loadMessages() {
     const chatMessages = document.getElementById('chatMessages');
 
@@ -387,22 +388,27 @@ async function loadMessages() {
             return;
         }
 
+        // Wyświetl wiadomości w dobrej kolejności (najstarsze na górze, najnowsze na dole)
         messages.forEach(msg => {
             const time = new Date(msg.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
             const username = msg.username || `Użytkownik ${msg.user_ID}`;
             displayMessage(username, msg.content, time);
         });
+
+        // Automatyczne przewinięcie na dół (do najnowszej wiadomości)
+        scrollToBottom();
+
     } catch (error) {
         console.error('Błąd ładowania wiadomości:', error);
     }
 }
 
-// Wyświetlanie wiadomości
+// Wyświetlanie wiadomości - POPRAWIONE
 function displayMessage(user, message, time) {
     const chatMessages = document.getElementById('chatMessages');
     const messageElement = document.createElement('div');
     messageElement.className = 'message';
-
+    
     messageElement.innerHTML = `
         <div class="message-header">
             <span class="message-user">${user}</span>
@@ -410,9 +416,28 @@ function displayMessage(user, message, time) {
         </div>
         <div class="message-content">${message}</div>
     `;
-
+    
     chatMessages.appendChild(messageElement);
+}
+
+// Automatyczne przewijanie na dół czatu
+function scrollToBottom() {
+    const chatMessages = document.getElementById('chatMessages');
     chatMessages.scrollTop = chatMessages.scrollHeight;
+}
+
+// Rozpoczęcie odpytywania czatu - POPRAWIONE
+function startChatPolling() {
+    // Wyczyść istniejący interval
+    if (pollingInterval) {
+        clearInterval(pollingInterval);
+    }
+    
+    // Załaduj wiadomości natychmiast
+    loadMessages();
+    
+    // Ustaw odpytywanie co 3 sekundy (mniej agresywne)
+    pollingInterval = setInterval(loadMessages, 3000);
 }
 
 // Wysyłanie wiadomości DO BAZY DANYCH
@@ -564,7 +589,7 @@ async function deleteNote(noteId) {
     }
 }
 
-// Zapis wszystkich notatek DO BAZY DANYCH
+// Zapis wszystkich notatek DO BAZY DANYCH - POPRAWIONE
 async function saveAllNotes() {
     // SPRAWDŹ CZY ZALOGOWANY
     if (!currentUser || !currentUser.id) {
@@ -581,8 +606,7 @@ async function saveAllNotes() {
             const content = textarea.value.trim();
             
             if (content && noteId) {
-                await apiRequest('notes', 'PUT', {
-                    id: noteId,
+                await apiRequest(`notes/${noteId}`, 'PUT', {
                     content: content,
                     title: 'Notatka'
                 });

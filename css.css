@@ -260,7 +260,7 @@ body {
     margin-top: 15px;
 }
 
-/* Sekcja czatu */
+/* Sekcja czatu - POPRAWIONA */
 .chat-messages {
     height: 300px;
     overflow-y: auto;
@@ -277,6 +277,7 @@ body {
     border-radius: 8px;
     background-color: white;
     box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
 }
 
 .message-header {
@@ -298,6 +299,26 @@ body {
 
 .message-content {
     color: #333;
+    word-wrap: break-word;
+}
+
+/* Dodaj styl dla przewijania */
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
 }
 
 .message-input {
