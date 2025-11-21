@@ -37,7 +37,7 @@ function handleRegister($pdo, $method, $id = null) {
             
             echo json_encode([
                 'success' => true,
-                'message' => 'Konto zostało utworzone',
+                'message' => 'Konto zostało utworzone! Możesz się teraz zalogować.',
                 'user_id' => $userId
             ]);
             break;
