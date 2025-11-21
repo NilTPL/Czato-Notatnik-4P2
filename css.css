@@ -1,0 +1,533 @@
+/* Reset i podstawowe style */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+body {
+    background-color: #f5f5f5;
+    color: #333;
+    line-height: 1.6;
+}
+
+.container {
+    display: flex;
+    min-height: 100vh;
+}
+
+/* Panel boczny */
+.sidebar {
+    width: 250px;
+    background-color: #2c3e50;
+    color: white;
+    padding: 20px 0;
+    box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+}
+
+.logo {
+    padding: 0 20px 20px;
+    border-bottom: 1px solid #34495e;
+    margin-bottom: 20px;
+}
+
+.logo h1 {
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 10px;
+}
+
+.user-info {
+    font-size: 14px;
+    padding: 8px 0;
+}
+
+.role-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 12px;
+    font-weight: 600;
+    margin-left: 8px;
+}
+
+.role-badge.teacher {
+    background-color: #e74c3c;
+}
+
+.role-badge.student {
+    background-color: #3498db;
+}
+
+.nav-links {
+    list-style: none;
+}
+
+.nav-links li {
+    margin-bottom: 5px;
+}
+
+.nav-links a {
+    display: block;
+    padding: 12px 20px;
+    color: #ecf0f1;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.nav-links a:hover {
+    background-color: #34495e;
+    border-left: 3px solid #3498db;
+}
+
+.nav-links a.active {
+    background-color: #34495e;
+    border-left: 3px solid #3498db;
+    font-weight: 600;
+}
+
+/* Główna zawartość */
+.main-content {
+    flex: 1;
+    padding: 30px;
+    overflow-y: auto;
+}
+
+.tab-content {
+    display: none;
+    background: white;
+    border-radius: 8px;
+    padding: 25px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.tab-content.active {
+    display: block;
+}
+
+.tab-header {
+    margin-bottom: 20px;
+    padding-bottom: 15px;
+    border-bottom: 1px solid #eee;
+}
+
+.tab-header h2 {
+    font-size: 24px;
+    color: #2c3e50;
+    margin-bottom: 5px;
+}
+
+.tab-header p {
+    color: #7f8c8d;
+    font-size: 14px;
+}
+
+/* Formularz logowania */
+.login-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: #2c3e50;
+}
+
+.form-group input, .form-group select {
+    width: 100%;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+}
+
+.form-group input:focus, .form-group select:focus {
+    border-color: #3498db;
+    outline: none;
+}
+
+.role-select {
+    background-color: white;
+}
+
+.login-btn {
+    width: 100%;
+    padding: 12px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.login-btn:hover {
+    background-color: #2980b9;
+}
+
+/* Przyciski */
+.btn-primary {
+    background-color: #3498db;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.btn-primary:hover {
+    background-color: #2980b9;
+}
+
+.btn-success {
+    background-color: #27ae60;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.btn-success:hover {
+    background-color: #219652;
+}
+
+.btn-secondary {
+    background-color: #95a5a6;
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.btn-secondary:hover {
+    background-color: #7f8c8d;
+}
+
+/* Tablica nauczyciela */
+.board-controls {
+    margin-bottom: 20px;
+}
+
+.teacher-board {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    min-height: 200px;
+}
+
+.board-content {
+    white-space: pre-wrap;
+    line-height: 1.6;
+}
+
+.board-editor {
+    width: 100%;
+    min-height: 200px;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.permission-info {
+    background-color: #fff3cd;
+    border: 1px solid #ffeaa7;
+    border-radius: 5px;
+    padding: 12px;
+    color: #856404;
+    margin-top: 15px;
+}
+
+/* Sekcja czatu - POPRAWIONA */
+.chat-messages {
+    height: 300px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 5px;
+    padding: 15px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+}
+
+.message {
+    margin-bottom: 15px;
+    padding: 10px 15px;
+    border-radius: 8px;
+    background-color: white;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    border-left: 4px solid #3498db;
+}
+
+.message-header {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 5px;
+    font-size: 0.9em;
+}
+
+.message-user {
+    font-weight: 600;
+    color: #3498db;
+}
+
+.message-time {
+    color: #7f8c8d;
+    font-size: 0.85em;
+}
+
+.message-content {
+    color: #333;
+    word-wrap: break-word;
+}
+
+/* Dodaj styl dla przewijania */
+.chat-messages::-webkit-scrollbar {
+    width: 6px;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+    background: #a8a8a8;
+}
+
+.message-input {
+    display: flex;
+    margin-bottom: 20px;
+}
+
+.message-input input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 1px solid #ddd;
+    border-radius: 5px 0 0 5px;
+    font-size: 14px;
+}
+
+.message-input button {
+    padding: 12px 20px;
+    background-color: #3498db;
+    color: white;
+    border: none;
+    border-radius: 0 5px 5px 0;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s;
+}
+
+.message-input button:hover {
+    background-color: #2980b9;
+}
+
+/* Lista użytkowników */
+.users-list {
+    list-style: none;
+    margin-top: 20px;
+}
+
+.users-list li {
+    padding: 10px 15px;
+    margin-bottom: 8px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+}
+
+.status-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.online {
+    background-color: #2ecc71;
+}
+
+.offline {
+    background-color: #e74c3c;
+}
+
+/* Notatki */
+.notes-controls {
+    margin-bottom: 20px;
+    display: flex;
+    gap: 10px;
+}
+
+.notes-container {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.note-item {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 15px;
+    position: relative;
+}
+
+.note-header {
+    display: flex;
+    justify-content: between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.note-date {
+    font-size: 12px;
+    color: #6c757d;
+}
+
+.note-actions {
+    display: flex;
+    gap: 5px;
+}
+
+.note-content {
+    width: 100%;
+    min-height: 80px;
+    padding: 10px;
+    border: 1px solid #ddd;
+    border-radius: 5px;
+    font-family: inherit;
+    font-size: 14px;
+    resize: vertical;
+}
+
+.delete-note {
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    padding: 5px 10px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.delete-note:hover {
+    background-color: #c0392b;
+}
+
+.loading {
+    text-align: center;
+    color: #7f8c8d;
+    padding: 20px;
+}
+
+.error {
+    color: #e74c3c;
+    background-color: #fadbd8;
+    padding: 10px;
+    border-radius: 5px;
+    margin-bottom: 15px;
+}
+
+/* Responsywność */
+@media (max-width: 768px) {
+    .container {
+        flex-direction: column;
+    }
+    
+    .sidebar {
+        width: 100%;
+        height: auto;
+    }
+    
+    .nav-links {
+        display: flex; 
+        overflow-x: auto;
+    }
+    
+    .nav-links li {
+        flex: 0 0 auto;
+        margin-bottom: 0;
+    }
+    
+    .nav-links a {
+        border-left: none;
+        border-bottom: 3px solid transparent;
+        white-space: nowrap;
+    }
+    
+    .nav-links a.active {
+        border-left: none;
+        border-bottom: 3px solid #3498db;
+    }
+    
+    .notes-controls {
+        flex-direction: column;
+    }
+}
+/* Przyciski w panelu bocznym - Wyloguj się */
+.logout-btn {
+    width: calc(100% - 40px); /* dopasowanie do paddingu sidebar */
+    margin: 10px 20px 0 20px;
+    padding: 12px 0;
+    
+    background-color: #e74c3c;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.logout-btn:hover {
+    background-color: #c0392b;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+    transform: translateY(-2px);
+}
+
+.logout-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.success {
+    background-color: #d4edda;
+    color: #155724;
+    padding: 10px;
+    border-radius: 4px;
+    border: 1px solid #c3e6cb;
+    margin-top: 10px;
+    text-align: center;
+}
