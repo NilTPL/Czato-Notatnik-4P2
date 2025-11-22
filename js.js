@@ -483,9 +483,11 @@ async function loadUsers() {
 
         users.forEach(user => {
             const userItem = document.createElement('li');
+const userLastLogin = user ? user.last_login : "";
             userItem.innerHTML = `
                 <span class="status-indicator ${user.is_online ? 'online' : 'offline'}"></span>
-                ${user.username} ${user.role === 'teacher' ? '(Nauczyciel)' : ''}
+                ${user.username} ${user.role === 'teacher' ? '(Nauczyciel)' : '' }
+                | Ostatnie zalogowanie: ${userLastLogin}
             `;
             usersList.appendChild(userItem);
         });
