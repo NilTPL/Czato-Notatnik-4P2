@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tablica nauczyciela</title>
+    <link rel="stylesheet" href="css.css">
+</head>
+<body> 
+    <div class="container">
+        <!-- Panel boczny z nawigacją -->
+        <div class="sidebar">
+            <div class="logo">
+                <h1>Logmark</h1>
+                <div id="userInfo" class="user-info" style="display: none;">
+                    <span id="userName"></span>
+                    <span id="userRole" class="role-badge"></span>
+                    <button id="logoutBtn" class="logout-btn" style="display:none;">Wyloguj się</button>
+                </div>
+            </div>
+            <ul class="nav-links">
+                <li><a href="#" class="nav-link active" data-tab="tab1">Logowanie</a></li>
+                <li><a href="#" class="nav-link" data-tab="tab2">Tablica nauczyciela</a></li>
+                <li><a href="#" class="nav-link" data-tab="tab3">Czat grupowy</a></li>
+                <li><a href="#" class="nav-link" data-tab="tab4">Notatki</a></li>
+            </ul>
+        </div>
+
+        <!-- Główna zawartość -->
+        <div class="main-content">
+            <!-- Zakładka 1: Logowanie -->
+            <div id="tab1" class="tab-content active">
+                <div class="tab-header">
+                    <h2>Zaloguj się</h2>
+                    <p>Wprowadź swoje dane logowania</p>
+                    <p style="margin-top: 15px; font-size: 14px; color: #666;">
+                        Nie masz konta? 
+                        <a href="#" id="showRegister" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                            Zarejestruj się!
+                        </a>
+                    </p>
+                </div>
+                
+                <!-- Formularz logowania -->
+                <form class="login-form" id="loginForm">
+                    <div class="form-group">
+                        <label for="login">Login</label>
+                        <input type="text" id="login" placeholder="Wprowadź login" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="password">Hasło</label>
+                        <input type="password" id="password" placeholder="Wprowadź hasło" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="role">Rola</label>
+                        <select id="role" class="role-select" required>
+                            <option value="">Wybierz rolę</option>
+                            <option value="teacher">Nauczyciel</option>
+                            <option selected value="student">Uczeń</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="login-btn">Zaloguj się</button>
+                </form>
+
+                <!-- Formularz rejestracji (początkowo ukryty) -->
+                <form class="login-form" id="registerForm" style="display: none;">
+                    <div class="form-group">
+                        <label for="regUsername">Nazwa użytkownika</label>
+                        <input type="text" id="regUsername" placeholder="Wprowadź nazwę użytkownika" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regPassword">Hasło</label>
+                        <input type="password" id="regPassword" placeholder="Wprowadź hasło" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="regRole">Rola</label>
+                        <select id="regRole" class="role-select" required>
+                            <option value="">Wybierz rolę</option>
+                            <option value="teacher">Nauczyciel</option>
+                            <option value="student">Uczeń</option>
+                        </select>
+                    </div>
+                    <button type="submit" class="login-btn">Zarejestruj się</button>
+                    <p style="text-align: center; margin-top: 15px;">
+                        <a href="#" id="showLogin" style="color: #007bff; text-decoration: none;">
+                            ← Wróć do logowania
+                        </a>
+                    </p>
+                </form>
+
+                <div id="loginError" class="error" style="display: none;"></div>
+                <div id="registerError" class="error" style="display: none;"></div>
+                <div id="registerSuccess" class="success" style="display: none;"></div>
+            </div>
+
+            <!-- Zakładka 2: Tablica nauczyciela -->
+            <div id="tab2" class="tab-content">
+                <div class="tab-header">
+                    <h2>Tablica nauczyciela</h2>
+                    <p>Bardzo • ważne</p>
+                </div>
+                <div class="board-controls">
+                    <button id="editBoardBtn" class="btn-primary" style="display: none;">Edytuj tablicę</button>
+                    <button id="saveBoardBtn" class="btn-success" style="display: none;">Zapisz zmiany</button>
+                    <button id="cancelEditBtn" class="btn-secondary" style="display: none;">Anuluj</button>
+                </div>
+                <div id="boardLoading" class="loading">Ładowanie tablicy...</div>
+                <div id="teacherBoard" class="teacher-board">
+                    <div id="boardContent" class="board-content"></div>
+                    <textarea id="boardEditor" class="board-editor" style="display: none;" 
+                              placeholder="Wpisz treść tablicy..."></textarea>
+                </div>
+                <div class="permission-info" id="permissionInfo" style="display: none;">
+                    <p>🔒 Masz uprawnienia tylko do przeglądania tablicy</p>
+                </div>
+            </div>
+
+            <!-- Zakładka 3: Czat grupowy -->
+            <div id="tab3" class="tab-content">
+                <div class="tab-header">
+                    <h2>Czat grupowy</h2>
+                </div>
+                <div class="chat-messages" id="chatMessages">
+                    <div class="loading">Ładowanie wiadomości...</div>
+                </div>
+                <div class="message-input">
+                    <input type="text" id="messageInput" placeholder="Wpisz wiadomość...">
+                    <button id="sendMessage">Wyślij</button>
+                </div>
+                <div class="users-section">
+                    <h3>Użytkownicy online:</h3>
+                    <div id="usersLoading" class="loading">Ładowanie użytkowników...</div>
+                    <ul class="users-list" id="usersList"></ul>
+                </div>
+            </div>
+
+            <!-- Zakładka 4: Notatki -->
+            <div id="tab4" class="tab-content">
+                <div class="tab-header">
+                    <h2>Notatki</h2>
+                    <p>Twoje prywatne notatki</p>
+                </div>
+                <div class="notes-controls">
+                    <button id="addNoteBtn" class="btn-primary">Dodaj notatkę</button>
+                    <button id="saveNotesBtn" class="btn-success">Zapisz wszystkie</button>
+                </div>
+                <div id="notesLoading" class="loading">Ładowanie notatek...</div>
+                <div id="notesContainer" class="notes-container"></div>
+            </div>
+        </div>
+    </div>
+
+    <script src="js.js"></script>
+</body>
+</html>
